@@ -1,0 +1,103 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow"><title>After Sales – Org Chart</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,Segoe UI,Roboto,sans-serif;background:#f4f6fa;color:#1c2333;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+header{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px 14px;background:#fff;border-bottom:1px solid #dde2ec}
+h1{font-size:17px;margin:0 12px 0 0}button,select,input{font:inherit}
+button{border:1px solid #c5ccdb;background:#fff;border-radius:7px;padding:6px 11px;cursor:pointer}button:hover{background:#eef2fa}
+button.p{background:#1f4e9c;color:#fff;border-color:#1f4e9c}button.d{color:#b3261e}
+#stat{font-size:12px;color:#667}#main{flex:1;display:flex;min-height:0}
+#vp{flex:1;overflow:hidden;position:relative;cursor:grab;background-image:radial-gradient(#d5dbe8 1px,transparent 1px);background-size:20px 20px}
+#vp.drag{cursor:grabbing}#stage{position:absolute;left:0;top:0;transform-origin:0 0;padding:30px}
+.tree ul{padding-top:22px;position:relative;display:flex;justify-content:center;margin:0;padding-left:0;list-style:none}
+.tree li{position:relative;padding:22px 7px 0;text-align:center;display:flex;flex-direction:column;align-items:center}
+.tree>ul>li{padding-top:0}
+.tree li::before,.tree li::after{content:"";position:absolute;top:0;right:50%;width:50%;height:22px;border-top:2px solid #9aa6bf}
+.tree li::after{right:auto;left:50%;border-left:2px solid #9aa6bf}
+.tree li:only-child::before,.tree li:only-child::after{display:none}.tree li:only-child{padding-top:0}
+.tree li:first-child::before,.tree li:last-child::after{border:0 none}
+.tree li:last-child::before{border-right:2px solid #9aa6bf;border-radius:0 8px 0 0}
+.tree li:first-child::after{border-radius:8px 0 0 0}
+.tree ul ul::before{content:"";position:absolute;top:0;left:50%;border-left:2px solid #9aa6bf;height:22px}
+.tree>ul>li>ul{padding-top:22px}
+.card{width:158px;background:#fff;border-radius:10px;border:1px solid #d3d9e6;border-top:5px solid var(--c);padding:8px 8px 7px;box-shadow:0 1px 4px rgba(20,30,60,.1);cursor:pointer;position:relative}
+.card:hover{box-shadow:0 3px 10px rgba(20,30,60,.2)}.card.sel{outline:2px solid #1f4e9c}.card.u{border-style:dashed}
+.n{font-weight:650;font-size:13px;line-height:1.2}.t{font-size:11px;color:#5a6479;margin-top:3px;line-height:1.25}
+.tm{display:inline-block;font-size:10px;margin-top:5px;padding:1px 7px;border-radius:9px;background:var(--c);color:#fff}
+.tg{position:absolute;left:50%;bottom:-11px;transform:translateX(-50%);min-width:42px;height:22px;border-radius:11px;padding:0 6px;font-size:11px;line-height:18px;background:#fff;border:1px solid #9aa6bf}
+li.hasbtn>.card{margin-bottom:11px}
+#side{width:300px;background:#fff;border-left:1px solid #dde2ec;padding:14px;overflow:auto;display:none}#side.on{display:block}
+#side label{display:block;font-size:12px;color:#556;margin:9px 0 3px}#side input,#side select{width:100%;padding:6px;border:1px solid #c5ccdb;border-radius:6px}
+.row{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}#legend{position:absolute;left:10px;bottom:10px;background:#fffd;padding:6px 9px;border-radius:8px;font-size:11px;border:1px solid #dde2ec;max-width:60%}
+#legend span{display:inline-block;margin-right:10px}#legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+#find{width:170px;padding:6px;border:1px solid #c5ccdb;border-radius:7px}.hl>.card{outline:3px solid #f5a623}
+.note{font-size:11px;color:#8a5a00;margin-top:8px}
+</style></head><body>
+<header><h1>After Sales – Org Chart</h1>
+<button onclick="expandAll()">Expand all</button><button onclick="collapseAll()">Collapse all</button>
+<button onclick="zoomBy(1.2)">＋</button><button onclick="zoomBy(1/1.2)">－</button><button onclick="fit()">Fit to screen</button>
+<input id="find" placeholder="Find person…" oninput="doFind(this.value)">
+<button class="p" onclick="addP('')">Add person</button>
+<button onclick="exportCsv()">Export CSV</button><button onclick="document.getElementById('imp').click()">Import CSV</button>
+<input type="file" id="imp" accept=".csv,text/csv" style="display:none" onchange="importCsv(this)">
+<button class="d" onclick="resetAll()">Reset to original</button><span id="stat"></span></header>
+<div id="main"><div id="vp"><div id="stage" class="tree"></div><div id="legend"></div></div>
+<div id="side"></div></div>
+<script>
+const ORIG_CSV = "name,title,team,manager,notes\nPunnaivanam S,Head - After Sales,Leadership,,Top of chart\n(Unnamed) Parts Head,Parts Head,Parts,Punnaivanam S,\"Box shows title only, no name (vacant or name omitted?)\"\nAbhishek Tiwari,\"Forward & Reverse Logistics, Dealer & COCO Parts coordination\",Parts,(Unnamed) Parts Head,Heads the six regional parts clusters\nNitin Dandona,(no title shown),Parts,(Unnamed) Parts Head,UNCLEAR: sits beside Abhishek Tiwari under Parts Head; connector not clearly legible\nAkhilesh Sharma,(no title shown),Unlabelled,Punnaivanam S,\"UNCLEAR: no title/team on slide; line appears to go to Head - After Sales; Ops & Finance per user, not in deck\"\nRohit Srivastava,Parts Manager (North),Parts,Abhishek Tiwari,Cluster: North1\nSanjeev Bhuria,Parts Manager (North),Parts,Abhishek Tiwari,Cluster: North1\nAbhishek verma,Parts Manager (North),Parts,Abhishek Tiwari,Cluster: North1\nNand Kishor,Parts Manager (RJ),Parts,Abhishek Tiwari,Cluster: North2\nVinod Jat,Parts Manager (RJ),Parts,Abhishek Tiwari,Cluster: North2\nAnil Pannu,Parts Manager (North),Parts,Abhishek Tiwari,Cluster: North2\nChandan Karmakar,Parts Manager (WBNE),Parts,Abhishek Tiwari,Cluster: East\nBiswa Mohan Sahu,Parts Manager (BJHO),Parts,Abhishek Tiwari,Cluster: East\nAjai Tripathi,Parts Manager (UP),Parts,Abhishek Tiwari,Cluster: East\nPranab Dhara,Parts Manager (WBNE),Parts,Abhishek Tiwari,Cluster: East\nRanjit Kumar,Parts Manager (BJHO),Parts,Abhishek Tiwari,Cluster: East\nDhananjay Brahma Deo Tiwari,Parts Manager (UP),Parts,Abhishek Tiwari,Cluster: East\nRaj Kamal,Parts Manager (UP),Parts,Abhishek Tiwari,Cluster: East\nSachin Pawar,Parts Manager (MH),Parts,Abhishek Tiwari,Cluster: West1\nPrathamesh Masurkar,Parts Manager (MH),Parts,Abhishek Tiwari,Cluster: West1\nRavindra Pedulwar,Parts Manager (MH),Parts,Abhishek Tiwari,Cluster: West1\nKetan Dhirubhai Katariya,Parts Manager (GJ),Parts,Abhishek Tiwari,Cluster: West2\nAtul Kumar,Parts Manager (MPCG),Parts,Abhishek Tiwari,Cluster: West2\nNIRDOSH TYAGI,Parts Manager (MPCG),Parts,Abhishek Tiwari,Cluster: West2\nVikram Dwivedi,Parts Manager (MPCG),Parts,Abhishek Tiwari,Cluster: West2\nHarish Kumar S,Parts Manager (KA),Parts,Abhishek Tiwari,Cluster: South\nK Shyam Kumar,Parts Manager (APTG),Parts,Abhishek Tiwari,Cluster: South\nBala Muralikrishnan S,Parts Manager (TN),Parts,Abhishek Tiwari,Cluster: South\nBairi Vijay Kumar,Parts Manager (APTG),Parts,Abhishek Tiwari,Cluster: South\nKishore Kumar J,Parts Manager (TN),Parts,Abhishek Tiwari,Cluster: South\nRuban R,Parts Manager (TN),Parts,Abhishek Tiwari,Cluster: South\nAkhil M K,Parts Manager (KL),Parts,Abhishek Tiwari,Cluster: South\nGomathi Sankar,Parts Manager (KL),Parts,Abhishek Tiwari,Cluster: South\nDeepak Theivasigamani,Parts Manager (KA),Parts,Abhishek Tiwari,Cluster: South\nSadiq Pasha,Network,Network,Punnaivanam S,\nDilip,RSA,Network,Sadiq Pasha,\nNithin,\"Manpower, COCO, Homologation, Inactive centers\",Network,Sadiq Pasha,\nSenthil Kumar S,Senior Manager - Product Monitoring and Service Engineering,Product Monitoring & Service Engineering,Punnaivanam S,\nRamanujam Rajendran,Warranty,Product Monitoring & Service Engineering,Senthil Kumar S,Sub-team: Warranty\nGouse Peera,Warranty Reverse claims,Product Monitoring & Service Engineering,Ramanujam Rajendran,Sub-team: Warranty\nSwapnil Anant Talge,Warranty Reverse claims,Product Monitoring & Service Engineering,Ramanujam Rajendran,Sub-team: Warranty\nRaju Karimilla,Warranty Reverse claims,Product Monitoring & Service Engineering,Ramanujam Rajendran,Sub-team: Warranty\nDada Hayat,Warranty claims - Motor,Product Monitoring & Service Engineering,Ramanujam Rajendran,Sub-team: Warranty\nGalande Sujit Tatyasaheb,Warranty claims - Battery,Product Monitoring & Service Engineering,Ramanujam Rajendran,Sub-team: Warranty\nSachin Rajendra Pandit,Warranty claims - HV Parts,Product Monitoring & Service Engineering,Ramanujam Rajendran,Sub-team: Warranty\nRanjit Appaso Jagatap,Warranty claims - HV Parts,Product Monitoring & Service Engineering,Ramanujam Rajendran,Sub-team: Warranty\nHimanshu Jadaun,Warranty claims - HV Parts,Product Monitoring & Service Engineering,Ramanujam Rajendran,Sub-team: Warranty\nNagaraj Tammidi,Technical support & Product Monitoring,Product Monitoring & Service Engineering,Senthil Kumar S,Sub-team: Technical Support\nThugutla Narahari,\"Diagnostic Support - GJ, UP & North\",Product Monitoring & Service Engineering,Nagaraj Tammidi,Sub-team: Technical Support\nJai Prakash,\"Diagnostic Support - TN, KA & WBNE\",Product Monitoring & Service Engineering,Nagaraj Tammidi,Sub-team: Technical Support\nSrinivasan Pragasam,\"Diagnostic Support - APTG, KL & BJHO\",Product Monitoring & Service Engineering,Nagaraj Tammidi,Sub-team: Technical Support\nMubarak Kondakamala Basha,\"Diagnostic Support - MH, MPCG & RJ\",Product Monitoring & Service Engineering,Nagaraj Tammidi,Sub-team: Technical Support\nArunagirinathan S,Product Monitoring,Product Monitoring & Service Engineering,Nagaraj Tammidi,Sub-team: Technical Support\nRamesh PN,Business Planner,Direct reports,Punnaivanam S,\nRudraksh Tiwari,Intern,Direct reports,Punnaivanam S,\nAnkita Singh,Intern,Direct reports,Punnaivanam S,\n";
+const KEY="afterSalesOrg.v1";
+function parseCsv(t){const rows=[];let r=[],f="",q=false;for(let i=0;i<t.length;i++){const c=t[i];if(q){if(c=='"'){if(t[i+1]=='"'){f+='"';i++}else q=false}else f+=c}else if(c=='"')q=true;else if(c==','){r.push(f);f=""}else if(c=='\n'||c=='\r'){if(c=='\r'&&t[i+1]=='\n')i++;r.push(f);f="";rows.push(r);r=[]}else f+=c}if(f!==""||r.length){r.push(f);rows.push(r)}
+ const h=rows.shift().map(s=>s.trim().toLowerCase());return rows.filter(x=>x.length>1||x[0]).map(x=>{const o={};["name","title","team","manager","notes"].forEach(k=>{const i=h.indexOf(k);o[k]=i>=0?(x[i]||""):""});return o}).filter(o=>o.name)}
+const esc=s=>'"'+String(s).replace(/"/g,'""')+'"';
+function toCsv(){return "name,title,team,manager,notes\n"+P.map(p=>[p.name,p.title,p.team,p.manager,p.notes].map(esc).join(",")).join("\n")+"\n"}
+let P;try{P=JSON.parse(localStorage.getItem(KEY))}catch(e){P=null}if(!Array.isArray(P)||!P.length)P=parseCsv(ORIG_CSV);
+let collapsed={},sel=null,editing=null,adding=false,scale=1,tx=0,ty=0;
+function save(){try{localStorage.setItem(KEY,JSON.stringify(P));stat("Saved ✓ (this browser)")}catch(e){stat("Could not save (storage blocked)")}}
+function stat(s){const e=document.getElementById("stat");e.textContent=s}
+const COLORS=["#1f4e9c","#2a9d8f","#e76f51","#8e5bd6","#c9a227","#d1477a","#4c956c","#5c6b8a","#e07b00"];
+function tcolor(t){const ts=[...new Set(P.map(p=>p.team))];return COLORS[ts.indexOf(t)%COLORS.length]}
+function kids(n){return P.filter(p=>p.manager===n)}
+function roots(){const ns=new Set(P.map(p=>p.name));return P.filter(p=>!p.manager||!ns.has(p.manager))}
+function desc(n,seen=new Set()){let c=0;for(const k of kids(n)){if(seen.has(k.name))continue;seen.add(k.name);c+=1+desc(k.name,seen)}return c}
+const H=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function nodeHtml(p,depth){const k=kids(p.name),cl=!!collapsed[p.name],u=(p.notes||"").startsWith("UNCLEAR")||p.name.startsWith("(Unnamed)");
+ let h=`<li class="${k.length?'hasbtn':''}" data-n="${H(p.name)}"><div class="card${u?' u':''}${sel===p.name?' sel':''}" style="--c:${tcolor(p.team)}" data-n="${H(p.name)}" title="${H(p.notes||'')}"><div class="n">${H(p.name)}</div><div class="t">${H(p.title)}</div><span class="tm">${H(p.team)}</span>`;
+ if(k.length)h+=`<button class="tg" data-t="${H(p.name)}">${cl?'+ '+desc(p.name):'−'}</button>`;
+ h+=`</div>`;if(k.length&&!cl&&depth<50)h+=`<ul>${k.map(c=>nodeHtml(c,depth+1)).join("")}</ul>`;return h+"</li>"}
+function render(keep){const st=document.getElementById("stage");st.innerHTML=`<ul>${roots().map(r=>nodeHtml(r,0)).join("")}</ul>`;
+ const ts=[...new Set(P.map(p=>p.team))];document.getElementById("legend").innerHTML=ts.map(t=>`<span><i style="background:${tcolor(t)}"></i>${H(t)} (${P.filter(p=>p.team===t).length})</span>`).join("")+`<span><b>${P.length}</b> people</span>`;
+ apply();if(!keep)fit()}
+function apply(){document.getElementById("stage").style.transform=`translate(${tx}px,${ty}px) scale(${scale})`}
+function fit(){const vp=document.getElementById("vp"),st=document.getElementById("stage");st.style.transform="none";const w=st.offsetWidth,h=st.offsetHeight;scale=Math.min(vp.clientWidth/w,vp.clientHeight/h,1.2);tx=(vp.clientWidth-w*scale)/2;ty=Math.max(0,(vp.clientHeight-h*scale)/2);apply()}
+function zoomAt(f,cx,cy){const ns=Math.min(3,Math.max(.08,scale*f));tx=cx-(cx-tx)*ns/scale;ty=cy-(cy-ty)*ns/scale;scale=ns;apply()}
+function zoomBy(f){const vp=document.getElementById("vp");zoomAt(f,vp.clientWidth/2,vp.clientHeight/2)}
+function expandAll(){collapsed={};render()}function collapseAll(){P.forEach(p=>{if(kids(p.name).length)collapsed[p.name]=true});const r=roots();render()}
+const vp=document.getElementById("vp");let drag=null,moved=false;
+vp.addEventListener("wheel",e=>{e.preventDefault();const b=vp.getBoundingClientRect();zoomAt(e.deltaY<0?1.1:1/1.1,e.clientX-b.left,e.clientY-b.top)},{passive:false});
+vp.addEventListener("pointerdown",e=>{if(e.target.closest(".card"))return;drag={x:e.clientX-tx,y:e.clientY-ty};moved=false;vp.classList.add("drag");vp.setPointerCapture(e.pointerId)});
+vp.addEventListener("pointermove",e=>{if(!drag)return;tx=e.clientX-drag.x;ty=e.clientY-drag.y;apply()});
+vp.addEventListener("pointerup",()=>{drag=null;vp.classList.remove("drag")});
+document.getElementById("stage").addEventListener("click",e=>{const t=e.target.closest(".tg");if(t){const n=t.dataset.t;collapsed[n]=!collapsed[n];render(true);return}const c=e.target.closest(".card");if(c){sel=c.dataset.n;openEdit(sel);render(true)}});
+function doFind(v){v=v.trim().toLowerCase();document.querySelectorAll("li.hl").forEach(x=>x.classList.remove("hl"));if(!v)return;
+ const hit=P.filter(p=>(p.name+" "+p.title).toLowerCase().includes(v));let changed=false;hit.forEach(h=>{let m=h.manager;const by=Object.fromEntries(P.map(p=>[p.name,p]));while(m&&by[m]){if(collapsed[m]){collapsed[m]=false;changed=true}m=by[m].manager}});
+ if(changed)render(true);const names=new Set(hit.map(h=>h.name));document.querySelectorAll("li[data-n]").forEach(li=>{if(names.has(li.dataset.n))li.classList.add("hl")});stat(hit.length+" match(es)")}
+function opts(excl){const bad=new Set(excl?[excl]:[]);if(excl){const walk=n=>kids(n).forEach(k=>{if(!bad.has(k.name)){bad.add(k.name);walk(k.name)}});walk(excl)}
+ return `<option value="">(none – top level)</option>`+P.filter(p=>!bad.has(p.name)).map(p=>`<option>${H(p.name)}</option>`).join("")}
+function form(p,orig){const s=document.getElementById("side");s.className="on";
+ s.innerHTML=`<b>${orig?'Edit person':'Add person'}</b><label>Name</label><input id="f_n" value="${H(p.name)}"><label>Title</label><input id="f_t" value="${H(p.title)}"><label>Team</label><input id="f_te" list="tl" value="${H(p.team)}"><datalist id="tl">${[...new Set(P.map(x=>x.team))].map(t=>`<option>${H(t)}</option>`).join("")}</datalist><label>Manager (change to move them with their team)</label><select id="f_m">${opts(orig)}</select><label>Notes</label><input id="f_no" value="${H(p.notes||'')}">
+ <div class="row"><button class="p" onclick="saveP(${orig?`'${orig.replace(/\\/g,"\\\\").replace(/'/g,"\\'")}'`:"''"})">Save</button><button onclick="closeSide()">Cancel</button>${orig?`<button onclick="addP(document.getElementById('f_n').defaultValue)">Add report</button><button class="d" onclick="removeP('${orig.replace(/\\/g,"\\\\").replace(/'/g,"\\'")}')">Remove</button>`:""}</div>
+ ${orig?'<div class="note">Removing moves their direct reports up to their manager.</div>':''}<div id="err" class="note"></div>`;document.getElementById("f_m").value=p.manager||""}
+function openEdit(n){const p=P.find(x=>x.name===n);if(p)form(p,n)}
+function addP(mgr){form({name:"",title:"",team:(P.find(x=>x.name===mgr)||{}).team||"",manager:mgr,notes:""},"")}
+function closeSide(){document.getElementById("side").className="";sel=null;render(true)}
+function saveP(orig){const g=i=>document.getElementById(i).value.trim();const nm=g("f_n");const er=document.getElementById("err");
+ if(!nm){er.textContent="Name is required.";return}if(nm!==orig&&P.some(p=>p.name===nm)){er.textContent="That name already exists.";return}
+ const o={name:nm,title:g("f_t"),team:g("f_te"),manager:g("f_m"),notes:g("f_no")};
+ if(!orig)P.push(o);else{P=P.map(p=>p.name===orig?o:(p.manager===orig?{...p,manager:nm}:p));if(collapsed[orig]){collapsed[nm]=true;delete collapsed[orig]}}
+ save();sel=nm;render(true);openEdit(nm)}
+function removeP(n){if(!confirm("Remove "+n+"? Their reports move up one level."))return;const me=P.find(p=>p.name===n);P=P.filter(p=>p.name!==n).map(p=>p.manager===n?{...p,manager:me.manager}:p);save();closeSide()}
+function exportCsv(){const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([toCsv()],{type:"text/csv"}));a.download="org_chart.csv";a.click()}
+function importCsv(i){const f=i.files[0];if(!f)return;f.text().then(t=>{const n=parseCsv(t);if(!n.length){alert("No rows found. Need columns name,title,team,manager,notes.");return}if(!confirm("Replace current chart with "+n.length+" imported people?"))return;P=n;collapsed={};save();closeSide();render()});i.value=""}
+function resetAll(){if(!confirm("Reset to the original deck data? Your saved edits will be lost."))return;localStorage.removeItem(KEY);P=parseCsv(ORIG_CSV);collapsed={};closeSide();render();stat("Reset to original")}
+window.addEventListener("resize",()=>{});render();stat("Edits auto-save in this browser");
+</script></body></html>
