@@ -33,7 +33,18 @@ li.hasbtn>.card{margin-bottom:11px}
 #find{width:170px;padding:6px;border:1px solid #c5ccdb;border-radius:7px}.hl>.card{outline:3px solid #f5a623}
 .note{font-size:11px;color:#8a5a00;margin-top:8px}
 @page{size:A4 landscape;margin:8mm}
-@media print{html,body{height:auto!important;overflow:visible!important;background:#fff!important;display:block}
+@media print{body.printing .tree li{padding:16px 4px 0}body.printing .tree>ul>li{padding-top:0}
+body.printing .tree ul{padding-top:16px}
+body.printing .tree li::before,body.printing .tree li::after{height:16px}
+body.printing .tree ul ul::before{height:16px}
+body.printing .card{width:118px;padding:4px 5px 4px;border-radius:6px;box-shadow:none}
+body.printing .n{font-size:11px}body.printing .t{font-size:9px;margin-top:1px}body.printing .tm{font-size:8px;margin-top:2px;padding:0 5px}
+body.printing li.hasbtn>.card{margin-bottom:0}
+body.printing ul.lg{display:grid;grid-template-columns:repeat(var(--cols),auto);gap:5px 8px;padding-top:12px;justify-content:center;border:0}
+body.printing ul.lg::before{height:12px!important}
+body.printing ul.lg>li{padding:0;display:block}
+body.printing ul.lg>li::before,body.printing ul.lg>li::after{display:none}
+html,body{height:auto!important;overflow:visible!important;background:#fff!important;display:block}
 *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 header,#side,#legend,.tg,.noprint{display:none!important}
 #main{display:block}#vp{overflow:visible!important;background:none!important;cursor:default}
@@ -108,14 +119,16 @@ function importCsv(i){const f=i.files[0];if(!f)return;f.text().then(t=>{const n=
 function resetAll(){if(!confirm("Reset to the original deck data? Your saved edits will be lost."))return;localStorage.removeItem(KEY);P=parseCsv(ORIG_CSV);collapsed={};closeSide();render();stat("Reset to original")}
 window.addEventListener("resize",()=>{});render();stat("Edits auto-save in this browser");
 </script><script>
-(function(){let sv=null,tiles=[];const vp=()=>document.getElementById("vp"),st=()=>document.getElementById("stage");
-window.addEventListener("beforeprint",()=>{const s=st();sv=s.style.transform;s.style.transform="none";
-const w=s.scrollWidth,h=s.scrollHeight,PW=1050,k=Math.min(1,PW/w);
-if(k>=0.45){s.style.transform="scale("+k+")";vp().style.height=Math.ceil(h*k)+"px";vp().style.flex="none";return}
-const r=0.65,sw=PW/r,n=Math.ceil(w/sw);s.style.display="none";vp().style.flex="none";vp().style.height="auto";
+(function(){let sv=null,tiles=[],lgs=[];const vp=()=>document.getElementById("vp"),st=()=>document.getElementById("stage");
+window.addEventListener("beforeprint",()=>{const s=st();sv=s.style.transform;s.style.transform="none";document.body.classList.add("printing");
+s.querySelectorAll("ul").forEach(u=>{const c=[...u.children];if(c.length>=3&&c.every(l=>!l.querySelector("ul"))){u.classList.add("lg");u.style.setProperty("--cols",Math.max(2,Math.min(6,Math.ceil(c.length/5))));lgs.push(u)}});
+let mx=0,my=0,x0=1e9,sr=s.getBoundingClientRect();s.querySelectorAll(".card").forEach(c=>{const r=c.getBoundingClientRect();mx=Math.max(mx,r.right-sr.left);my=Math.max(my,r.bottom-sr.top);x0=Math.min(x0,r.left-sr.left)});
+const w=Math.ceil(mx+6),h=Math.ceil(my+6),PW=1050,PH=730,k=Math.min(1,PW/w,PH/h);
+if(k>=0.3){s.style.transform="scale("+k+")";s.style.width=w+"px";vp().style.height=Math.ceil(h*k)+"px";vp().style.width=Math.ceil(w*k)+"px";vp().style.setProperty("overflow","hidden","important");vp().style.flex="none";window.__k=k;return}
+const r=0.5,sw=PW/r,n=Math.ceil(w/sw);s.style.display="none";vp().style.flex="none";vp().style.height="auto";
 for(let i=0;i<n;i++){const t=document.createElement("div");t.className="ptile";
 t.style.cssText="position:relative;overflow:hidden;width:"+PW+"px;height:"+Math.ceil(h*r)+"px;break-after:page;page-break-after:always";
 const c=s.cloneNode(true);c.removeAttribute("id");c.style.cssText="display:block;position:absolute;left:0;top:0;transform-origin:0 0;transform:scale("+r+") translateX("+(-i*sw)+"px)";
-t.appendChild(c);const l=document.createElement("div");l.textContent="Part "+(i+1)+" of "+n;l.style.cssText="position:absolute;right:4px;bottom:0;font:10px sans-serif;color:#888";t.appendChild(l);vp().appendChild(t);tiles.push(t)}});
-window.addEventListener("afterprint",()=>{if(sv===null)return;tiles.forEach(t=>t.remove());tiles=[];const s=st();s.style.display="";s.style.transform=sv;vp().style.height="";vp().style.flex="";sv=null});})();
+t.appendChild(c);vp().appendChild(t);tiles.push(t)}});
+window.addEventListener("afterprint",()=>{if(sv===null)return;tiles.forEach(t=>t.remove());tiles=[];lgs.forEach(u=>{u.classList.remove("lg");u.style.removeProperty("--cols")});lgs=[];document.body.classList.remove("printing");const s=st();s.style.width="";s.style.display="";s.style.transform=sv;vp().style.height="";vp().style.width="";vp().style.removeProperty("overflow");vp().style.flex="";sv=null});})();
 </script></body></html>
